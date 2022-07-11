@@ -10,8 +10,17 @@ module.exports = (sequelize, DataTypes) => {
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate(models) {
+    static associate(_models) {
       // define association here
+      this.belongsTo(User, {
+        as: "created",
+        foreignKey: "created_by",
+      });
+
+      this.belongsTo(User, {
+        as: "updated",
+        foreignKey: "updated_by",
+      });
     }
 
 //to hide password while retrieving
@@ -23,88 +32,109 @@ module.exports = (sequelize, DataTypes) => {
       return attributes;
       // return {...this.get(), password: undefined};
     }
-
   }
   User.init(
     {
-      email :{
-        type: DataTypes.STRING,
-        allowNull: false,
-        validate: { isEmail: true},
-        unique: {msg: "Email must be unique."},
-      },
-      id :{
+      id: {
         type: DataTypes.UUID,
-        primaryKey: true,
         defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
       },
-      first_name:{
+      first_name: {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
-          notNull:{ msg: "First Name should not be null."},
-          notEmpty: {msg: "First name should not be empty"}
+          notNull: { msg: "First Name should not be null." },
+          notEmpty: { msg: "First Name should not be empty." },
         },
-        // transforming the first name to all caps
-        // get(){
-        //   const rawValue = this.getDataValue("first_name");
-        //   return rawValue ? rawValue.toUpperCase() : null;
-        // },
       },
-      middle_name:{
+      middle_name: {
         type: DataTypes.STRING,
       },
-      last_name:{
+      last_name: {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
-          notNull:{ msg: "last name Nameshould not be null."},
-          notEmpty: {msg: "last name should not be empty"}
+          notNull: { msg: "Last Name should not be null." },
+          notEmpty: { msg: "Last Name should not be empty." },
         },
       },
-      fullname:{
+      full_name: {
         type: DataTypes.STRING,
-        set(value) {
-          this.setDataValue("fullname",
-          this.first_name + " " + this.middle_name + " " + this.last_name);
+        set(_value) {
+          this.setDataValue(
+            "full_name",
+            this.first_name + " " + this.middle_name + " " + this.last_name
+          );
         },
-        
       },
-      gender:{
+      // profile_pic: {
+      //   type: DataTypes.STRING,
+      //   get() {
+      //     const rawValue = this.getDataValue("profile_pic");
+      //     return rawValue ? "http://localhost:3600/public/" + rawValue : null; // MALE
+      //   },
+      // },
+      gender: {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
           isIn: {
-            args: [['Male','Female']],
-            msg: "gender should be male or female",
+            args: [["Male", "Female", "Others"]],
+            msg: "Gender should be male, female or others only.",
           },
+        },
+        get() {
+          const rawValue = this.getDataValue("gender");
+          return rawValue ? rawValue.toUpperCase() : null; // MALE
+        },
       },
-      }, 
       civil_status: {
-      type: DataTypes.STRING,
-      allowNull: false
+        type: DataTypes.STRING,
+        allowNull: false,
       },
-      birth_date : {
-      type: DataTypes.DATE,
-      allowNull: false,
-      //! FIXED THIS ONE
-      }, 
+      birth_date: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+      email: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+          isEmail: true,
+        },
+        unique: "email",
+      },
       password: {
         type: DataTypes.STRING,
         allowNull: false,
       },
       status: {
         type: DataTypes.STRING,
-        defaultValue: 'Active'
+        defaultValue: "Active",
       },
-  },
-  {
-    sequelize,
-    timestamps: true,
-    createdAt: "date_created",
-    updatedAt: "date_updated",
-    modelName: 'User',
-    // tableName: "Customer"
-  });
+      created_by: {
+        type: DataTypes.UUID,
+        references: {
+          model: User,
+          key: "id",
+        },
+      },
+      updated_by: {
+        type: DataTypes.UUID,
+        references: {
+          model: User,
+          key: "id",
+        },
+      },
+    },
+    {
+      sequelize,
+      timestamps: true,
+      createdAt: "date_created",
+      updatedAt: "date_updated",
+      modelName: "User",
+    }
+  );
   return User;
 };

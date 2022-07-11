@@ -2,6 +2,8 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const db = require("./src/models");
+const jwt = require("jsonwebtoken");
+
 
 //routes
 const userRoute = require("./src/routes/user.routes");
@@ -18,6 +20,8 @@ app.use(
         extended: true,
     })
 );
+
+// console.log(require("crypto").randomBytes(64).toString("hex"));
 
 // get config variables from env
 dotenv.config();
@@ -49,8 +53,26 @@ app.use((req, res, next) =>{
 app.get("/", (req, res) => {
     res.json({ message: "Welcome to LMMS API" });
 });
+
+// to authenticate token
+const authenticateToken = (req, res, next) =>{
+    const authHeader = req.headers["authorization"]; // bearer token 
+    const token = authHeader && authHeader.split(" ")[1];
+    console.log(token);
+
+    if(token == null) return res.sendStatus(401); //unauthorized access
+
+    // verify if token is valid
+    jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
+        console.log(user, err);
+        if (err) return res.sendStatus(403); //forbidden
+        req.user = user;
+    });
+
+};
+
 //${process.env.API_VERSION}
-app.use(`${process.env.API_VERSION}/user`, userRoute);
+app.use(`${process.env.API_VERSION}/user`,authenticateToken ,userRoute);
 
 const PORT = process.env.PORT || 5000;
 
